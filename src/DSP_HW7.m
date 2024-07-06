@@ -1,41 +1,59 @@
-%% Practice
+%% HW 7. 
 clear; clc;
 
-x = [1, 3, 4, 2, 1, 2, 2, 1]';
-h = [1, 2, 1]';
-y1 = conv(h,x);
+%x = [1 3 4 2 1 2 2 1]';
+x = [1 3 4 3 5 7 6 3 4 6 7 7 4 2 4 6 4]';
+h = [1 2 1]';
 
-%% Lecture 6-1 page.13
-N = pow2(ceil(log2(length(h))));
-M = N / 2;
-zero_padding_h = zeros(N, 1);
-zero_padding_h(1:length(h)) = h;
-H = fft(zero_padding_h);
+tmp=cputime; y1=conv(h,x);         time_spent1=cputime-tmp;
+tmp=cputime; y2=overlabSave(x, h); time_spent2=cputime-tmp;
 
-data_block = zeros(N, 1);
-y2 = zeros(N + M, 1);
-iteration = floor(length(x)/M);
-for n = 1:iteration
-    data_block(1:M) = data_block(M+1:end);
-    data_block(M+1:end) = x((n-1)*M+1:n*M);
-    X = fft(data_block);
-    Y = X.*H;
-    tmp = ifft(Y);
-    y2((n-1)*M+1:n*M) = tmp(M+1:end);
+if isequal(y1, y2)
+    disp('y1과 y2는 같습니다.');
+else
+    disp('y1과 y2는 다릅니다.');
 end
 
-data_block(1:M) = data_block(M+1:end);
-data_block(M+1:end) = zeros(M, 1);
-%if length(x)/M - floor(length(x)/M) > 0
-%    data_block(M+1:M + length(x)/M - floor(length(x)/M)) = x((iteration-1)*M+1:end);
-%end
-X = fft(data_block);
-Y = X.*H;
-tmp = ifft(Y);
-y2((iteration-1)*M+1:end) = tmp(M+1:end);
+disp(['convolution 실행시간:  ' num2str(time_spent1)]);
+disp(['overlap save 실행시간: ' num2str(time_spent2)]);
 
-%% HW 7-1. time domain filtering
-%clear;
+function output = overlabSave(x, h)
+    N = pow2(ceil(log2(length(h))));
+    M = N / 2;
+    
+    zero_padding_h = zeros(N, 1);
+    zero_padding_h(1:length(h)) = h;
+
+    remain = mod(length(x),M);
+    zero_padding_x = cat(1,x(:),zeros(M - remain,1));
+    
+    H = fft(zero_padding_h);
+    
+    iteration = floor(length(zero_padding_x)/M);
+    output = zeros(iteration*M+remain, 1);
+    
+    data_block = zeros(N, 1);
+    for n = 1:iteration
+        data_block(1:M) = data_block(M+1:end);
+        data_block(M+1:end) = zero_padding_x((n-1)*M+1:n*M);
+        X = fft(data_block);
+        Y = X.*H;
+        tmp = ifft(Y);
+        output((n-1)*M+1:n*M) = tmp(M+1:end);
+    end
+    
+    if remain > 0
+        data_block(1:M) = data_block(M+1:end);
+        data_block(M+1:end) = zeros(M, 1);
+        X = fft(data_block);
+        Y = X.*H;
+        tmp = ifft(Y);
+        output(iteration*M+1:end) = tmp(M+1:M+remain);
+    end
+end
+
+%% Lecture 6-1 page.14 : time domain filtering
+clear;
 
 now_time = cputime;
 
@@ -53,8 +71,8 @@ y1 = conv(x, h);
 
 disp(['time domain filtering: ' num2str(cputime - now_time)])
 
-%% HW 7-2. frequency domain filtering
-%clear;
+%% Lecture 6-1 page.14 : frequency domain filtering
+clear;
 
 now_time = cputime;
 
