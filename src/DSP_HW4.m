@@ -12,7 +12,10 @@ N = length(soundfile);
 A = 0.2;
 x = (1:N)';
 soundfile_sin_added = soundfile + A * sin(om * x);
+
+%sound(soundfile, fs);
 %sound(soundfile_sin_added, fs);
+%Calling "clear sound" will stop the playback
 
 %% HW 4-2. spetrocgram을 본다
 fig=figure(1);
@@ -44,21 +47,24 @@ ylim([0 1.1]);
 xlim([0 pi]);
 title('Sinewave removing');
 
-sinewave_extracted = zeros(N, 1);
+sinewave_removed = zeros(N, 1);
 for n = 3:N
     for i = 1:length(sine_stop_filter_numerator)
-        sinewave_extracted(n) = sinewave_extracted(n) + sine_stop_filter_numerator(i) * soundfile_sin_added(n-i+1);
+        sinewave_removed(n) = sinewave_removed(n) + sine_stop_filter_numerator(i) * soundfile_sin_added(n-i+1);
     end
     for i = 2:length(sine_stop_filter_denominator)
-        sinewave_extracted(n) = sinewave_extracted(n) - sine_stop_filter_denominator(i) * sinewave_extracted(n-i+1);
+        sinewave_removed(n) = sinewave_removed(n) - sine_stop_filter_denominator(i) * sinewave_removed(n-i+1);
     end
 end
 
 plot3 = subplot(2,1,2);
-specgram(sinewave_extracted);
+specgram(sinewave_removed);
 title("Sinewave removed",'FontWeight','bold');
 clim(plot3, limits);
 colorbar(plot3);
+
+%sound(sinewave_removed, fs);
+%Calling "clear sound" will stop the playback
 
 %% HW 4-4. 2차/2차 IIR notch filter 적용하여 sinewave 추출
 figure(3);
@@ -86,9 +92,12 @@ end
 
 plot4 = subplot(2,1,2);
 specgram(sinewave_extracted);
-title("Sinewave removed",'FontWeight','bold');
+title("Sinewave extracted",'FontWeight','bold');
 clim(plot4, limits);
 colorbar(plot4);
+
+%sound(sinewave_extracted, fs);
+%Calling "clear sound" will stop the playback
 
 %% 질문
 figure(4);
@@ -141,4 +150,3 @@ grid;
 ylim([0 1.1]);
 xlim([0 pi]);
 title(['omega: ' num2str(new_om/pi) ' pi']);
-
